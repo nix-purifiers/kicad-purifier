@@ -29,6 +29,7 @@ jobs:
       - run: nix build .#xvfb --out-link result-xvfb
       - run: nix build .#gui-test-env --out-link result-gui-env
       - run: python3 tests/provider.py result-native-helper
+      - run: python3 tests/dependency-environment.py result-cli
       - run: python3 tests/native.py result-cli result-kicad
       - run: python3 tests/gui.py result-gui-cli result-xvfb result-gui-env
       - run: python3 tests/artifacts.py result-cli result-kicad

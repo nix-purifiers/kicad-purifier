@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import signal
@@ -23,6 +24,11 @@ with tempfile.TemporaryDirectory(prefix="kicad-gui-") as temporary:
     )
     config = project / ".kicad-purifier/config/kicad/10.0"
     config.mkdir(parents=True)
+    # KiCad GAL_TYPE_CAIRO is 2. Use its native software canvas so the plugin
+    # lifecycle works in Xvfb without a host OpenGL driver installation.
+    (config / "kicad_common.json").write_text(
+        json.dumps({"graphics": {"canvas_type": 2}}) + "\n"
+    )
     (config / "fp-lib-table").write_text("(fp_lib_table (version 7))\n")
     (config / "sym-lib-table").write_text("(sym_lib_table (version 7))\n")
     bus = ET.Element("busconfig")
@@ -58,6 +64,7 @@ with tempfile.TemporaryDirectory(prefix="kicad-gui-") as temporary:
         GTK_USE_PORTAL="0",
         NO_AT_BRIDGE="1",
         LIBGL_ALWAYS_SOFTWARE="1",
+        LIBGL_DRIVERS_PATH=str(root / "no-gl-drivers"),
         DBUS_SYSTEM_BUS_ADDRESS="unix:path=" + str(root / "no-system-bus"),
         FONTCONFIG_FILE=str(resources / "fonts.conf"),
         KICAD_GUI_MARKER=str(root / "marker"),
@@ -78,7 +85,13 @@ with tempfile.TemporaryDirectory(prefix="kicad-gui-") as temporary:
             args, env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True
         )
         try:
-            status = process.wait(timeout=45)
+            try:
+                status = process.wait(timeout=45)
+            except subprocess.TimeoutExpired as error:
+                raise AssertionError(
+                    "Native KiCad GUI startup timed out:\n"
+                    + (root / "gui-test.log").read_text()
+                ) from error
         finally:
             try:
                 os.killpg(process.pid, signal.SIGTERM)

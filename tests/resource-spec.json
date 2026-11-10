@@ -1,0 +1,8 @@
+{
+  "name": "kicad",
+  "builder": "Kicad",
+  "roots": {
+    "bom.html": "bom.html"
+  },
+  "changedFile": "board.kicad_pcb"
+}

@@ -1,5 +1,6 @@
 {
   lib,
+  purifier,
   runCommand,
   python3,
   original,
@@ -16,6 +17,8 @@
   fetchers ? { },
   doCheck ? false,
   checkCommand ? "",
+  resourceRoots ? { },
+  resourceDependencies ? [ ],
 }:
 let
   lock = readLock { inherit src lockFile; };
@@ -31,7 +34,7 @@ let
         "result"
       ]);
   };
-  project = runCommand "kicad-project" { } ''
+  builtProject = runCommand "kicad-project" { } ''
     export KICAD_PURIFIER_ENVIRONMENT=${profile} KICAD_PURIFIER_COMMAND_BINARY=${commands}/bin/kicad-python
     export KICAD_PURIFIER_ORIGINAL_PCBNEW=${original.base}/${python3.sitePackages}/pcbnew.py
     export KICAD_PURIFIER_BUILTIN_SCRIPTS=${original.base}/share/kicad/scripting
@@ -45,6 +48,17 @@ let
     ${python3}/bin/python ${../native}/kicad_purifier_run_build.py
     ${lib.optionalString doCheck checkCommand}
   '';
+  projections = lib.optionalAttrs (resourceRoots != { }) (
+    purifier.resourceProjections {
+      producer = builtProject;
+      roots = resourceRoots;
+      dependencies = resourceDependencies;
+      inherit runCommand python3;
+    }
+  );
+  project = builtProject // {
+    inherit projections;
+  };
   release =
     runCommand "kicad-project-release"
       {
@@ -65,6 +79,6 @@ in
     environment = profile;
   };
   tests = project;
-  inherit release;
+  inherit release projections;
   fetches = lock.entries;
 }

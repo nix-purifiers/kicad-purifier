@@ -84,6 +84,10 @@
           build = p.buildKicadProject { src = ./examples/minimal; };
         in
         {
+          resource-projections = import ./tests/resource-projections.nix {
+            pkgs = pkgsFor system;
+            build = p.buildKicadProject;
+          };
           cli = p.cli;
           inherit (build.packages) environment project;
           release = build.release;

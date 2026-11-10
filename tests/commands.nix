@@ -10,10 +10,10 @@ let
   '';
 in
 runCommand "kicad-gui-test-commands" { } ''
-  mkdir -p "$out/bin"
-  cp -r ${commands}/bin/. "$out/bin/"
-  chmod -R u+w "$out/bin"
-  substituteInPlace "$out/bin/pcbnew" \
-    --replace-fail "export PYTHONPATH='" "export KICAD_GUI_PRODUCTION_MODULE=${native}/pcbnew.py
-export PYTHONPATH='${probe}:"
+    mkdir -p "$out/bin"
+    cp -r ${commands}/bin/. "$out/bin/"
+    chmod -R u+w "$out/bin"
+    substituteInPlace "$out/bin/pcbnew" \
+      --replace-fail "export PYTHONPATH='" "export KICAD_GUI_PRODUCTION_MODULE=${native}/pcbnew.py
+  export PYTHONPATH='${probe}:"
 ''
